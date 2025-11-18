@@ -2,7 +2,7 @@ import axios, { type AxiosInstance } from 'axios'
 import { getCsrfToken } from '@/utils'
 
 export const API_BASE_URL =
-  import.meta.env.VITE_API_URL ?? 'https://maltsevnikitaju-yandexmaptest-back-ce11.twc1.net'
+  import.meta.env.VITE_API_URL ?? 'https://api.maltsevnikitaju-yandexmaptest-front-2e25.twc1.nett'
 
 let csrfInitialized = false
 

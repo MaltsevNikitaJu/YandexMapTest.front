@@ -18,8 +18,10 @@ export function generateUuidv4() {
  * Не создаёт токен, если его нет в cookies.
  * @returns {string|undefined} Токен CSRF.
  */
-export function getCsrfToken() {
-  return VueCookies.get('XSRF-TOKEN')
+export function getCsrfToken(): string | null {
+  // Простое чтение из document.cookie
+  const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/)
+  return match ? decodeURIComponent(match[1]) : null
 }
 
 export function base64encode(data: string) {
@@ -35,8 +37,7 @@ export function pickObjectPart<T, K extends string | number | symbol>(
   object: Record<K, T>,
 ) {
   return fields.reduce<Record<string, T>>(
-    (acc, field) =>
-      Object.assign(acc, { field: object[field as keyof typeof object] }),
+    (acc, field) => Object.assign(acc, { field: object[field as keyof typeof object] }),
     {},
   )
 }
@@ -49,15 +50,10 @@ export function getURLWithoutPrefix(url: string) {
   return url.slice(url.indexOf('//') + 2)
 }
 
-export function makeQueryParams(
-  params: Record<string, string | number | boolean | undefined>,
-) {
+export function makeQueryParams(params: Record<string, string | number | boolean | undefined>) {
   const result = Object.entries(params)
     .filter((e): e is [string, string | number | boolean] => e[1] !== undefined)
-    .map(
-      ([key, value]) =>
-        `${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
-    )
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join('&')
   return result ? `?${result}` : ''
 }
@@ -72,8 +68,7 @@ export function formatNumber(number: number, fractionDigitsCount?: 0): string {
 
 export function wordForms(x: number, forms: string[]) {
   x = Math.abs(x)
-  if ((x % 100 < 10 || x % 100 > 15) && [2, 3, 4].includes(x % 10))
-    return forms[1]
+  if ((x % 100 < 10 || x % 100 > 15) && [2, 3, 4].includes(x % 10)) return forms[1]
   if ((x % 100 < 10 || x % 100 > 15) && x % 10 === 1) return forms[0]
   return forms[2] || forms[1]
 }

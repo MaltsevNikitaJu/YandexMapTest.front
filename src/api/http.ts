@@ -1,7 +1,8 @@
 import axios, { type AxiosInstance } from 'axios'
 import { getCsrfToken } from '@/utils'
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+export const API_BASE_URL =
+  import.meta.env.VITE_API_URL ?? 'https://maltsevnikitaju-yandexmaptest-back-ce11.twc1.net'
 
 let csrfInitialized = false
 
@@ -14,7 +15,7 @@ export function createApiClient(): AxiosInstance {
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-    },
+    } as Record<string, string>,
   })
 
   client.interceptors.request.use((config) => {
@@ -38,4 +39,3 @@ export async function ensureCsrfCookie(client: AxiosInstance): Promise<void> {
 export function resetCsrfState() {
   csrfInitialized = false
 }
-

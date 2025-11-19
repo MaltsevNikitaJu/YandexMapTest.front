@@ -1,5 +1,6 @@
-import VueCookies from 'vue-cookies'
 import base64 from 'base-64'
+
+let injectedCsrfToken: string | null = null
 
 export function takeHash(location: Location) {
   return location.hash.slice(1)
@@ -19,9 +20,15 @@ export function generateUuidv4() {
  * @returns {string|undefined} Токен CSRF.
  */
 export function getCsrfToken(): string | null {
-  // Простое чтение из document.cookie
+  if (injectedCsrfToken) {
+    return injectedCsrfToken
+  }
   const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/)
-  return match ? decodeURIComponent(match[1]) : null
+  return match && match[1] ? decodeURIComponent(match[1]) : null
+}
+
+export function setCsrfToken(token: string | null) {
+  injectedCsrfToken = token
 }
 
 export function base64encode(data: string) {
@@ -73,6 +80,6 @@ export function wordForms(x: number, forms: string[]) {
   return forms[2] || forms[1]
 }
 
-export function isFloat(x: any): x is number {
-  return x === +x && x !== (x | 0) && Number.isFinite(x)
+export function isFloat(x: unknown): x is number {
+  return typeof x === 'number' && Number.isFinite(x) && !Number.isInteger(x)
 }

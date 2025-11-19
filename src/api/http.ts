@@ -1,5 +1,5 @@
 import axios, { AxiosHeaders, type AxiosInstance } from 'axios'
-import { getCsrfToken } from '@/utils'
+import { getCsrfToken, setCsrfToken } from '@/utils'
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL ?? 'https://maltsevnikitaju-yandexmaptest-back-2e25.twc1.net'
@@ -33,10 +33,19 @@ export function createApiClient(): AxiosInstance {
 
 export async function ensureCsrfCookie(client: AxiosInstance): Promise<void> {
   if (csrfInitialized) return
-  await client.get('/sanctum/csrf-cookie')
+  const response = await client.get('/sanctum/csrf-cookie')
+  const headers = response.headers as AxiosHeaders & {
+    get?: (headerName: string) => string | null
+  }
+  const headerToken =
+    headers.get?.('x-xsrf-token') ?? (headers['x-xsrf-token'] as string | undefined)
+  if (typeof headerToken === 'string') {
+    setCsrfToken(headerToken)
+  }
   csrfInitialized = true
 }
 
 export function resetCsrfState() {
   csrfInitialized = false
+  setCsrfToken(null)
 }

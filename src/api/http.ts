@@ -1,4 +1,4 @@
-import axios, { type AxiosInstance } from 'axios'
+import axios, { AxiosHeaders, type AxiosInstance } from 'axios'
 import { getCsrfToken } from '@/utils'
 
 export const API_BASE_URL =
@@ -21,8 +21,9 @@ export function createApiClient(): AxiosInstance {
   client.interceptors.request.use((config) => {
     const token = getCsrfToken()
     if (token) {
-      if (!config.headers) config.headers = {}
-      config.headers['X-XSRF-TOKEN'] = token
+      const headers = AxiosHeaders.from(config.headers ?? {})
+      headers.set('X-XSRF-TOKEN', token)
+      config.headers = headers
     }
     return config
   })

@@ -1,10 +1,33 @@
-import axios, { AxiosHeaders, type AxiosInstance } from 'axios'
+import axios, {
+  AxiosHeaders,
+  type AxiosInstance,
+  type AxiosResponse,
+  type RawAxiosResponseHeaders,
+} from 'axios'
 import { getCsrfToken, setCsrfToken } from '@/utils'
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL ?? 'https://maltsevnikitaju-yandexmaptest-back-2e25.twc1.net'
 
 let csrfInitialized = false
+
+function extractXsrfToken(headers?: RawAxiosResponseHeaders | AxiosHeaders): string | undefined {
+  if (!headers) return undefined
+  if (headers instanceof AxiosHeaders) {
+    const value = headers.get('x-xsrf-token')
+    return typeof value === 'string' ? value : undefined
+  }
+  const headerValue = (headers as Record<string, unknown>)['x-xsrf-token']
+  return typeof headerValue === 'string' ? headerValue : undefined
+}
+
+function syncXsrfFromResponse<T>(response: AxiosResponse<T>) {
+  const token = extractXsrfToken(response.headers)
+  if (token) {
+    setCsrfToken(token)
+  }
+  return response
+}
 
 export function createApiClient(): AxiosInstance {
   const client = axios.create({
@@ -27,6 +50,15 @@ export function createApiClient(): AxiosInstance {
     }
     return config
   })
+  client.interceptors.response.use(
+    (response) => syncXsrfFromResponse(response),
+    (error) => {
+      if (error?.response) {
+        syncXsrfFromResponse(error.response)
+      }
+      throw error
+    },
+  )
 
   return client
 }
@@ -34,12 +66,8 @@ export function createApiClient(): AxiosInstance {
 export async function ensureCsrfCookie(client: AxiosInstance): Promise<void> {
   if (csrfInitialized) return
   const response = await client.get('/sanctum/csrf-cookie')
-  const headers = response.headers as AxiosHeaders & {
-    get?: (headerName: string) => string | null
-  }
-  const headerToken =
-    headers.get?.('x-xsrf-token') ?? (headers['x-xsrf-token'] as string | undefined)
-  if (typeof headerToken === 'string') {
+  const headerToken = extractXsrfToken(response.headers)
+  if (headerToken) {
     setCsrfToken(headerToken)
   }
   csrfInitialized = true

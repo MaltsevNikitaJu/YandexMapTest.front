@@ -14,11 +14,14 @@ let csrfInitialized = false
 function extractXsrfToken(headers?: RawAxiosResponseHeaders | AxiosHeaders): string | undefined {
   if (!headers) return undefined
   if (headers instanceof AxiosHeaders) {
-    const value = headers.get('x-xsrf-token')
+    const value = headers.get('x-csrf-token') ?? headers.get('x-xsrf-token')
     return typeof value === 'string' ? value : undefined
   }
-  const headerValue = (headers as Record<string, unknown>)['x-xsrf-token']
-  return typeof headerValue === 'string' ? headerValue : undefined
+  const rawHeaders = headers as RawAxiosResponseHeaders
+  const value =
+    (rawHeaders['x-csrf-token'] as string | undefined) ??
+    (rawHeaders['x-xsrf-token'] as string | undefined)
+  return typeof value === 'string' ? value : undefined
 }
 
 function syncXsrfFromResponse<T>(response: AxiosResponse<T>) {
@@ -34,7 +37,7 @@ export function createApiClient(): AxiosInstance {
     baseURL: API_BASE_URL,
     withCredentials: true,
     xsrfCookieName: 'XSRF-TOKEN',
-    xsrfHeaderName: 'X-XSRF-TOKEN',
+    xsrfHeaderName: 'X-CSRF-TOKEN',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
@@ -45,7 +48,7 @@ export function createApiClient(): AxiosInstance {
     const token = getCsrfToken()
     if (token) {
       const headers = AxiosHeaders.from(config.headers ?? {})
-      headers.set('X-XSRF-TOKEN', token)
+      headers.set('X-CSRF-TOKEN', token)
       config.headers = headers
     }
     return config
